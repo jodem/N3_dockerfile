@@ -1,7 +1,7 @@
 FROM       centos:centos7
 MAINTAINER Jodem <jocelyn.demoy@gmail.com>
 
-ENV SONATYPE_WORK /sonatype-work
+ENV NEXUS_DATA /opt/sonatype/nexus/data
 ENV NEXUS_VERSION 3.0.0-b2016011501
 
 RUN yum install -y \
@@ -22,20 +22,17 @@ RUN mkdir -p /opt/sonatype/nexus \
   http://download.sonatype.com/nexus/3/nexus-3.0.0-m7-unix.tar.gz \
   | gunzip \
   | tar x -C /tmp nexus-${NEXUS_VERSION} \
-  && mv /tmp/nexus-${NEXUS_VERSION}/*  /tmp/nexus-${NEXUS_VERSION}/.install4j* /opt/sonatype/nexus/ \
+  && mv /tmp/nexus-${NEXUS_VERSION}/{.[!.],}* /opt/sonatype/nexus/ \
   && rm -rf /tmp/nexus-${NEXUS_VERSION}
 
-RUN useradd -r -u 200 -m -c "nexus role account" -d ${SONATYPE_WORK} -s /bin/false nexus
+RUN useradd -r -u 200 -m -c "nexus role account" -d ${NEXUS_DATA} -s /bin/false nexus
 
-VOLUME ${SONATYPE_WORK}
+VOLUME ${NEXUS_DATA}
 
 EXPOSE 8081
 WORKDIR /opt/sonatype/nexus
 USER nexus
 ENV CONTEXT_PATH /
-#ENV MAX_HEAP 768m
-#ENV MIN_HEAP 256m
 ENV JAVA_OPTS -server -Djava.net.preferIPv4Stack=true
-#ENV LAUNCHER_CONF ./conf/jetty.xml ./conf/jetty-requestlog.xml
 USER root
 CMD bin/nexus run
