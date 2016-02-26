@@ -15,24 +15,27 @@ RUN cd /var/tmp \
   && rpm -Ui jdk-8u71-linux-x64.rpm \
   && rm -rf jdk-8u71-linux-x64.rpm
 
-
-
 RUN mkdir -p /opt/sonatype/nexus \
   && curl --fail --silent --location --retry 3 \
   http://download.sonatype.com/nexus/3/nexus-3.0.0-m7-unix.tar.gz \
   | gunzip \
   | tar x -C /tmp nexus-${NEXUS_VERSION} \
   && mv /tmp/nexus-${NEXUS_VERSION}/{.[!.],}* /opt/sonatype/nexus/ \
-  && rm -rf /tmp/nexus-${NEXUS_VERSION}
+  && rm -rf /tmp/nexus-${NEXUS_VERSION} \
+  && mv ${NEXUS_DATA} ${NEXUS_DATA}init \
+  && mkdir ${NEXUS_DATA}
+
+WORKDIR /opt/sonatype/nexus
 
 RUN useradd -r -u 200 -m -c "nexus role account" -d ${NEXUS_DATA} -s /bin/false nexus
 
 VOLUME ${NEXUS_DATA}
 
+COPY entrypoint.sh /
 EXPOSE 8081
 WORKDIR /opt/sonatype/nexus
 USER nexus
 ENV CONTEXT_PATH /
 ENV JAVA_OPTS -server -Djava.net.preferIPv4Stack=true
 USER root
-CMD bin/nexus run
+ENTRYPOINT ["/entrypoint.sh"]
